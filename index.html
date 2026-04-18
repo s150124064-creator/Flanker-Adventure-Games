@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flanker Adventure 5 Level</title>
+<style>
+  body {
+    touch-action: manipulation;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  #game {
+    width: min(900px, 95vw);
+    width: 900px;
+    max-width: 92vw;
+    min-height: 560px;
+    background: #1e293b;
+    border-radius: 24px;
+    padding: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+  }
+  .screen { display: none; }
+  .active { display: block; }
+  .center { text-align: center; }
+  button {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 999px;
+    font-size: 18px;
+    cursor: pointer;
+    background: #ef4444;
+    color: white;
+    margin-top: 20px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    font-size: 18px;
+  }
+  #stimulusArea {
+    min-height: 260px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .char {
+    font-size: 54px;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .left { transform: scaleX(-1); }
+  .target {
+    filter: drop-shadow(0 0 8px #22c55e);
+  }
+  .vertical {
+    flex-direction: column;
+  }
+  .moving-row {
+    position: absolute;
+    left: -40%;
+    animation: moveAcross 2.2s linear infinite;
+    display: flex;
+    gap: 10px;
+  }
+  @keyframes moveAcross {
+    from { left: -40%; }
+    to { left: 100%; }
+  }
+  .big-score {
+    font-size: 52px;
+    color: #facc15;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+
+  <div id="screen-name" class="screen active center">
+    <h1>🎮 Flanker Adventure</h1>
+    <p>Masukkan nama pemain terlebih dahulu</p>
+    <input id="playerName" type="text" placeholder="Nama pemain" style="padding:12px 16px;border-radius:12px;border:none;font-size:18px;width:280px;" />
+    <br />
+    <button onclick="goToIntro()">Lanjut</button>
+  </div>
+
+  <div id="intro" class="screen center">
+    <h1>🐾 Flanker Adventure Game</h1>
+    <h2>Instruksi Cara Main</h2>
+    <p>1. Fokus hanya pada <b>karakter TENGAH</b>.</p>
+    <p>2. Abaikan karakter pengganggu di kanan, kiri, atas, atau bawah.</p>
+    <p>3. Tekan <b>X</b> jika karakter tengah menghadap kiri.</p>
+    <p>4. Tekan <b>M</b> jika karakter tengah menghadap kanan.</p>
+    <p>5. Ada <b>5 level</b>, tiap level <b>10 soal</b>.</p>
+    <p>6. Setiap naik level, distraktor makin sulit dan mengecoh.</p>
+    <div style="font-size:60px;margin:20px;">🦩 🦩 <span class="target">🦩</span> 🦩 🦩</div>
+    <button onclick="startGame()">Mulai Game</button>
+  </div>
+
+  <div id="play" class="screen">
+    <audio id="bgm" loop>
+  <source src="akmu.bgm.mp3.mp3" type="audio/mpeg">
+</audio>
+
+    <div class="header">
+      <div>Level: <span id="lvl">1</span></div>
+      <div>Soal: <span id="trial">1</span>/10</div>
+      <div>Skor: <span id="score">0</span></div>
+      <div>Waktu: <span id="timer">0</span> ms</div>
+    </div>
+    <div id="stimulusArea"></div>
+    <div class="center" style="margin-top:18px; display:flex; justify-content:center; gap:20px;">
+      <button onclick="respond('left')" style="background:#3b82f6; min-width:120px;">X / Kiri</button>
+      <button onclick="respond('right')" style="background:#10b981; min-width:120px;">M / Kanan</button>
+    </div>
+    <p class="center" style="font-size:14px; opacity:0.8;">Laptop: keyboard X & M • HP: pakai tombol layar</p>
+  </div>
+
+  <div id="transition" class="screen center">
+    <h2>Level Selesai!</h2>
+    <div id="rewardChar" style="font-size:72px"></div>
+    <p id="rewardMsg"></p>
+    <p>Rata-rata kecepatan level: <b><span id="avgSpeed">0</span> ms</b></p>
+    <div class="big-score" id="levelScore"></div>
+    <div style="display:flex; gap:16px; justify-content:center; margin-top:20px;">
+      <button onclick="nextLevel()" id="nextBtn">Lanjut</button>
+    </div>
+  </div>
+
+  <div id="finish" class="screen center">
+    <h1>🏆 Semua Level Selesai</h1>
+    <p>Total skor akhir</p>
+    <div class="big-score" id="finalScore"></div>
+    <p>Rata-rata kecepatan total: <b><span id="finalAvg">0</span> ms</b></p>
+    <button onclick="location.reload()">Main Lagi</button>
+  </div>
+</div>
+
+<script>
+const levels = {
+  1: { animal: '🦩', flankers: 2, highlight: true, position: 'center', moving: false },
+
+  2: { animal: '🦩', flankers: 2, highlight: false, position: 'random', moving: false },
+
+  3: { animal: '🦩', flankers: 2, highlight: false, position: 'random', moving: true, speed: 3000 },
+
+  4: { animal: '🦩', flankers: 2, highlight: false, position: 'random', moving: true, speed: 2600, diagonal: true, fade: 2000 },
+
+  5: { animal: '🦩', flankers: 2, highlight: false, position: 'random', moving: true, speed: 2000, diagonal: true, fade: 600 }
+};
+
+let level = 1;
+let trial = 1;
+let totalScore = 0;
+let levelScore = 0;
+let targetDir = 'right'; // arah visual karakter target yang harus ditekan
+let startTime = 0;
+let levelRTs = [];
+let allRTs = [];
+let playerName = '';
+let levelAttempts = {1:0,2:0,3:0,4:0,5:0};
+let levelStats = [];
+let trialData = {
+  1: [], 2: [], 3: [], 4: [], 5: []
+};
+
+
+function goToIntro() {
+  const nameInput = document.getElementById('playerName');
+  playerName = nameInput.value.trim() || 'Anonim';
+  show('intro');
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  const bgm = document.getElementById('bgm');
+  if (bgm) bgm.play().catch(() => {});
+  level = 1;
+  totalScore = 0;
+  startLevel();
+}
+
+function startLevel() {
+  levelAttempts[level]++;
+  levelRTs = [];
+  trial = 1;
+  levelScore = 0;
+  document.getElementById('lvl').textContent = level;
+  document.getElementById('score').textContent = totalScore;
+  show('play');
+  renderTrial();
+}
+
+function createChar(animal, dir, isTarget=false) {
+  const span = document.createElement('span');
+  span.className = 'char' + (isTarget && levels[level].highlight ? ' target' : '');
+  span.textContent = animal;
+  // full body side profile facing left/right
+  // perbaikan: default emoji side-profile menghadap kiri, jadi dibalik mapping visualnya
+  // FIX FINAL: visual kiri = kepala di kiri (default), visual kanan = di-flip
+  span.style.transform = dir === 'left' ? 'scaleX(1)' : 'scaleX(-1)';
+  return span;
+}
+
+function startBackgroundMusic() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AudioCtx();
+
+  const notes = [523.25, 659.25, 783.99, 659.25, 698.46, 783.99, 880.0, 783.99];
+  let i = 0;
+
+  setInterval(() => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.value = notes[i % notes.length];
+    gain.gain.value = 0.04;
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.18);
+
+    i++;
+  }, 220);
+}
+
+function renderTrial() {
+  if (trial > 10) return showTransition();
+
+  document.getElementById('trial').textContent = trial;
+  const area = document.getElementById('stimulusArea');
+  area.innerHTML = '';
+  area.className = '';
+
+  const cfg = levels[level];
+  const targetLeft = Math.random() > 0.5;
+  const congruent = Math.random() > 0.5;
+  // simpan arah visual yang BENAR-BENAR tampil di layar
+  targetDir = targetLeft ? 'left' : 'right';
+  const flankDir = congruent ? targetDir : (targetDir === 'left' ? 'right' : 'left');
+
+  const totalFlankers = cfg.flankers;
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'flex';
+  wrapper.style.gap = '10px';
+  wrapper.style.alignItems = 'center';
+
+  if (cfg.position === 'random') {
+  wrapper.style.position = 'absolute';
+
+  const positions = [
+    { left: '10%', top: '20%' },
+    { right: '10%', top: '20%' },
+    { left: '35%', top: '5%' },
+    { left: '35%', bottom: '5%' }
+  ];
+
+  const pos = positions[Math.floor(Math.random() * positions.length)];
+  Object.assign(wrapper.style, pos);
+}
+
+  if (cfg.layout === 'column') {
+    wrapper.style.flexDirection = 'column';
+  }
+
+  for (let i = 0; i < totalFlankers; i++) {
+    wrapper.appendChild(createChar(cfg.animal, flankDir));
+  }
+  wrapper.appendChild(createChar(cfg.animal, targetDir, true));
+  for (let i = 0; i < totalFlankers; i++) {
+    wrapper.appendChild(createChar(cfg.animal, flankDir));
+  }
+
+  if (cfg.layout === 'mixed') {
+    wrapper.style.flexDirection = 'row';
+  }
+
+  if (cfg.layout === 'positioned') {
+    wrapper.style.flexDirection = 'row';
+    wrapper.style.position = 'absolute';
+
+    // posisi aman agar stimulus vertikal tidak terpotong
+    const positions = wrapper.style.flexDirection === 'column'
+      ? [
+          { left: '12%', top: '18%' },
+          { right: '12%', top: '18%' },
+          { left: '42%', top: '10%' }
+        ]
+      : [
+          { left: '8%', top: '15%' },
+          { right: '8%', top: '15%' },
+          { left: '35%', top: '8%' },
+          { left: '35%', bottom: '8%' }
+        ];
+
+    const pos = positions[Math.floor(Math.random() * positions.length)];
+    Object.assign(wrapper.style, pos);
+  }
+
+  if (cfg.moving) {
+    const directions = cfg.diagonal
+    ? ['diag1', 'diag2']
+    : ['left', 'right', 'top', 'bottom'];
+    const moveDir = directions[Math.floor(Math.random() * directions.length)];
+    wrapper.style.position = 'absolute';
+
+    if (moveDir === 'left') {
+    wrapper.animate([{ left: '-40%' }, { left: '100%' }], { duration: cfg.speed, iterations: Infinity });
+  } else if (moveDir === 'right') {
+    wrapper.animate([{ left: '100%' }, { left: '-40%' }], { duration: cfg.speed, iterations: Infinity });
+  } else if (moveDir === 'top') {
+    wrapper.animate([{ top: '-40%' }, { top: '100%' }], { duration: cfg.speed, iterations: Infinity });
+  } else if (moveDir === 'bottom') {
+    wrapper.animate([{ top: '100%' }, { top: '-40%' }], { duration: cfg.speed, iterations: Infinity });
+  } else if (moveDir === 'diag1') {
+    wrapper.animate([{ left: '-30%', top: '-30%' }, { left: '100%', top: '100%' }], { duration: cfg.speed, iterations: Infinity });
+  } else {
+    wrapper.animate([{ left: '100%', top: '-30%' }, { left: '-30%', top: '100%' }], { duration: cfg.speed, iterations: Infinity });
+  }
+}
+
+  if (cfg.fade) {
+  wrapper.animate(
+    [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }],
+    { duration: cfg.fade, iterations: Infinity }
+  );
+}
+
+// ⬇️ TAMBAHKAN DI SINI
+area.appendChild(wrapper);
+startTime = Date.now();
+}
+
+function respond(dir) {
+  if (!document.getElementById('play').classList.contains('active')) return;
+
+  const rt = Date.now() - startTime;
+  document.getElementById('timer').textContent = rt;
+  levelRTs.push(rt);
+  allRTs.push(rt);
+
+  // pastikan skor bertambah 10 untuk setiap jawaban benar
+  const isCorrect = dir === targetDir;
+  const score = isCorrect ? 10 : 0;
+  
+  if (isCorrect) {
+    totalScore += 10;
+    levelScore += 10;
+  }
+  // simpan data per soal
+  trialData[level].push({
+  trial: trial,
+  score: score,
+  rt: rt
+});
+
+  document.getElementById('score').textContent = totalScore;
+  trial++;
+  renderTrial();
+}
+
+function showTransition() {
+  show('transition');
+  document.getElementById('levelScore').textContent = levelScore;
+  const avg = levelRTs.length ? Math.round(levelRTs.reduce((a,b)=>a+b,0)/levelRTs.length) : 0;
+  levelStats.push({
+    name: playerName,
+    level: level,
+    attempts: levelAttempts[level],
+    avgRT: avg,
+    score: levelScore,
+    correct: levelScore / 10,
+    wrong: 10 - (levelScore / 10)
+  });
+  document.getElementById('avgSpeed').textContent = avg;
+
+  let char = '😢';
+  let msg = 'Ayo lebih fokus!';
+
+  if (levelScore >= 90) {
+    char = '👑';
+    msg = 'Hebat! Fokusmu luar biasa!';
+  } else if (levelScore >= 70) {
+    char = '😎';
+    msg = 'Bagus! Tinggal sedikit lagi sempurna';
+  }
+
+  document.getElementById('rewardChar').textContent = char + levels[level].animal;
+  document.getElementById('rewardMsg').textContent = msg;
+  document.getElementById('nextBtn').textContent = level === 5 ? 'Lihat Hasil Akhir' : 'Lanjut ke Level ' + (level + 1);
+}
+
+function nextLevel() {
+  if (level < 5) {
+    level++;
+    startLevel();
+  } else {
+    document.getElementById('finalScore').textContent = totalScore;
+    const favg = allRTs.length ? Math.round(allRTs.reduce((a,b)=>a+b,0)/allRTs.length) : 0;
+    document.getElementById('finalAvg').textContent = favg;
+    submitToSheet({
+  name: playerName,
+  trialData: trialData,
+  finalScore: totalScore,
+  finalAvg: favg,
+  date: new Date().toLocaleDateString(),
+  time: new Date().toLocaleTimeString(),
+  device: /Mobi|Android/i.test(navigator.userAgent) ? 'HP' : 'Laptop'
+});
+
+  show('finish'); // opsional tapi seharusnya ada
+
+  }
+}
+
+function submitToSheet(payload) {
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzW23mJhBMOvc4p25UAXaUYZWSBquBPwJMSbNpK0n2xa90Dsv4zSlU35BcCbp9QQzpY/exec';
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify(payload)
+  }).catch(err => console.log('Sheet error:', err));
+}
+
+
+window.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (key === 'x') respond('left');
+  if (key === 'm') respond('right');
+});
+</script>
+</body>
+</html>
