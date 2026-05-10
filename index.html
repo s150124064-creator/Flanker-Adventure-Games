@@ -105,7 +105,7 @@
     <p>2. Abaikan karakter pengganggu di kanan, kiri, atas, atau bawah.</p>
     <p>3. Tekan <b>X</b> jika karakter tengah menghadap kiri.</p>
     <p>4. Tekan <b>M</b> jika karakter tengah menghadap kanan.</p>
-    <p>5. Ada <b>5 level</b>, tiap level <b>10 soal</b>.</p>
+    <p>5. Ada <b>5 level</b>, tiap level <b>20 soal</b>.</p>
     <p>6. Setiap naik level, distraktor makin sulit dan mengecoh.</p>
     <div style="font-size:60px;margin:20px;">🦩 🦩 <span class="target">🦩</span> 🦩 🦩</div>
     <button onclick="startGame()">Mulai Game</button>
@@ -118,7 +118,7 @@
 
     <div class="header">
       <div>Level: <span id="lvl">1</span></div>
-      <div>Soal: <span id="trial">1</span>/10</div>
+      <div>Soal: <span id="trial">1</span>/20</div>
       <div>Skor: <span id="score">0</span></div>
       <div>Waktu: <span id="timer">0</span> ms</div>
     </div>
@@ -163,11 +163,136 @@ const levels = {
   5: { animal: '🦩', flankers: 2, highlight: false, position: 'random', moving: true, speed: 2000, diagonal: true, fade: 600 }
 };
 
+const trialBank = {
+  1: [
+    { target:'left', congruent:true },
+    { target:'left', congruent:true },
+    { target:'right', congruent:false },
+    { target:'right', congruent:false },
+    { target:'left', congruent:true },
+    { target:'right', congruent:true },
+    { target:'right', congruent:false },
+    { target:'right', congruent:false },
+    { target:'left', congruent:true },
+    { target:'right', congruent:true },
+    { target:'right', congruent:false },
+    { target:'right', congruent:false },
+    { target:'left', congruent:true },
+    { target:'left', congruent:true },
+    { target:'left', congruent:false },
+    { target:'right', congruent:false },
+    { target:'left', congruent:true },
+    { target:'left', congruent:true },
+    { target:'right', congruent:false },
+    { target:'right', congruent:false }
+  ],
+
+  2: [
+    { target:'right', congruent:true, position:0 },
+    { target:'left', congruent:true, position:1 },
+    { target:'left', congruent:false, position:2 },
+    { target:'right', congruent:false, position:3 },
+    { target:'right', congruent:true, position:1 },
+    { target:'left', congruent:true, position:2 },
+    { target:'left', congruent:false, position:3 },
+    { target:'right', congruent:false, position:0 },
+    { target:'right', congruent:true, position:2 },
+    { target:'left', congruent:true, position:3 },
+    { target:'left', congruent:false, position:0 },
+    { target:'right', congruent:false, position:1 },
+    { target:'left', congruent:true, position:3 },
+    { target:'right', congruent:true, position:0 },
+    { target:'right', congruent:false, position:1 },
+    { target:'right', congruent:false, position:2 },
+    { target:'left', congruent:true, position:0 },
+    { target:'right', congruent:true, position:1 },
+    { target:'left', congruent:false, position:2 },
+    { target:'right', congruent:false, position:3 }
+  ],
+
+  3: [
+    { target:'left',  congruent:true,  movement:'top' },
+    { target:'left', congruent:false, movement:'left' },
+    { target:'left',  congruent:false, movement:'bottom' },
+    { target:'right', congruent:true,  movement:'right' },
+    { target:'left', congruent:true,  movement:'top' },
+    { target:'right',  congruent:false, movement:'right' },
+    { target:'right', congruent:false, movement:'bottom' },
+    { target:'left',  congruent:true,  movement:'left' },
+    { target:'left',  congruent:false, movement:'top' },
+    { target:'right', congruent:true,  movement:'bottom' },
+    { target:'left',  congruent:true,  movement:'right' },
+    { target:'right', congruent:false, movement:'left' },
+    { target:'left', congruent:false, movement:'top' },
+    { target:'left',  congruent:true,  movement:'bottom' },
+    { target:'right', congruent:true,  movement:'left' },
+    { target:'left',  congruent:false, movement:'right' },
+    { target:'left',  congruent:true,  movement:'bottom' },
+    { target:'left', congruent:false, movement:'top' },
+    { target:'right',  congruent:false, movement:'left' },
+    { target:'right', congruent:true,  movement:'right' }
+  ],
+  4: [
+    { target:'right',  congruent:true,  movement:'diag1' },
+    { target:'left', congruent:false, movement:'diag2' },
+    { target:'righ',  congruent:false, movement:'diag2' },
+    { target:'right', congruent:true,  movement:'diag1' },
+
+    { target:'left', congruent:true,  movement:'diag2' },
+    { target:'left',  congruent:false, movement:'diag1' },
+    { target:'right', congruent:false, movement:'diag1' },
+    { target:'left',  congruent:true,  movement:'diag2' },
+
+    { target:'left',  congruent:false, movement:'diag1' },
+    { target:'right', congruent:true,  movement:'diag2' },
+    { target:'left',  congruent:true,  movement:'diag2' },
+    { target:'right', congruent:false, movement:'diag1' },
+
+    { target:'right', congruent:false, movement:'diag2' },
+    { target:'right',  congruent:true,  movement:'diag1' },
+    { target:'right', congruent:true,  movement:'diag1' },
+    { target:'left',  congruent:false, movement:'diag2' },
+
+    { target:'left',  congruent:true,  movement:'diag2' },
+    { target:'left', congruent:false, movement:'diag1' },
+    { target:'right',  congruent:false, movement:'diag1' },
+    { target:'left', congruent:true,  movement:'diag2' }
+  ],
+  5: [
+    { target:'right', congruent:false, movement:'diag1' },
+    { target:'left',  congruent:true,  movement:'diag2' },
+    { target:'right', congruent:true,  movement:'diag2' },
+    { target:'left',  congruent:false, movement:'diag1' },
+
+    { target:'right',  congruent:false, movement:'diag2' },
+    { target:'right', congruent:true,  movement:'diag1' },
+    { target:'left',  congruent:true,  movement:'diag1' },
+    { target:'right', congruent:false, movement:'diag2' },
+
+    { target:'right', congruent:true,  movement:'diag1' },
+    { target:'left',  congruent:false, movement:'diag2' },
+    { target:'left', congruent:false, movement:'diag1' },
+    { target:'left',  congruent:true,  movement:'diag2' },
+
+    { target:'left',  congruent:true,  movement:'diag1' },
+    { target:'right', congruent:false, movement:'diag2' },
+    { target:'left',  congruent:false, movement:'diag2' },
+    { target:'right', congruent:true,  movement:'diag1' },
+
+    { target:'right', congruent:false, movement:'diag1' },
+    { target:'right',  congruent:true,  movement:'diag2' },
+    { target:'right', congruent:false,  movement:'diag2' },
+    { target:'left',  congruent:false, movement:'diag1' }
+  ]
+};
+
+
+
 let level = 1;
 let trial = 1;
 let totalScore = 0;
 let levelScore = 0;
-let targetDir = 'right'; // arah visual karakter target yang harus ditekan
+let targetDir = 'right'; 
 let startTime = 0;
 let levelRTs = [];
 let allRTs = [];
@@ -213,9 +338,7 @@ function createChar(animal, dir, isTarget=false) {
   const span = document.createElement('span');
   span.className = 'char' + (isTarget && levels[level].highlight ? ' target' : '');
   span.textContent = animal;
-  // full body side profile facing left/right
-  // perbaikan: default emoji side-profile menghadap kiri, jadi dibalik mapping visualnya
-  // FIX FINAL: visual kiri = kepala di kiri (default), visual kanan = di-flip
+  
   span.style.transform = dir === 'left' ? 'scaleX(1)' : 'scaleX(-1)';
   return span;
 }
@@ -246,7 +369,7 @@ function startBackgroundMusic() {
 }
 
 function renderTrial() {
-  if (trial > 10) return showTransition();
+  if (trial > 20) return showTransition();
 
   document.getElementById('trial').textContent = trial;
   const area = document.getElementById('stimulusArea');
@@ -254,11 +377,16 @@ function renderTrial() {
   area.className = '';
 
   const cfg = levels[level];
-  const targetLeft = Math.random() > 0.5;
-  const congruent = Math.random() > 0.5;
-  // simpan arah visual yang BENAR-BENAR tampil di layar
-  targetDir = targetLeft ? 'left' : 'right';
-  const flankDir = congruent ? targetDir : (targetDir === 'left' ? 'right' : 'left');
+  const currentTrial = trialBank[level][trial - 1];
+
+  targetDir = currentTrial.target;
+
+  const congruent = currentTrial.congruent;
+
+  const flankDir =
+    congruent
+      ? targetDir
+      : (targetDir === 'left' ? 'right' : 'left');
 
   const totalFlankers = cfg.flankers;
   const wrapper = document.createElement('div');
@@ -276,7 +404,8 @@ function renderTrial() {
     { left: '35%', bottom: '5%' }
   ];
 
-  const pos = positions[Math.floor(Math.random() * positions.length)];
+  const currentTrial = trialBank[level][trial - 1];
+  const pos = positions[currentTrial.position || 0];
   Object.assign(wrapper.style, pos);
 }
 
@@ -300,7 +429,7 @@ function renderTrial() {
     wrapper.style.flexDirection = 'row';
     wrapper.style.position = 'absolute';
 
-    // posisi aman agar stimulus vertikal tidak terpotong
+    
     const positions = wrapper.style.flexDirection === 'column'
       ? [
           { left: '12%', top: '18%' },
@@ -314,7 +443,7 @@ function renderTrial() {
           { left: '35%', bottom: '8%' }
         ];
 
-    const pos = positions[Math.floor(Math.random() * positions.length)];
+    const moveDir = currentTrial.movement || 'left';
     Object.assign(wrapper.style, pos);
   }
 
@@ -322,7 +451,8 @@ function renderTrial() {
     const directions = cfg.diagonal
     ? ['diag1', 'diag2']
     : ['left', 'right', 'top', 'bottom'];
-    const moveDir = directions[Math.floor(Math.random() * directions.length)];
+    const currentTrial = trialBank[level][trial - 1];
+    const moveDir = currentTrial.movement || 'left';
     wrapper.style.position = 'absolute';
 
     if (moveDir === 'left') {
@@ -347,7 +477,7 @@ function renderTrial() {
   );
 }
 
-// ⬇️ TAMBAHKAN DI SINI
+
 area.appendChild(wrapper);
 startTime = Date.now();
 }
@@ -360,7 +490,7 @@ function respond(dir) {
   levelRTs.push(rt);
   allRTs.push(rt);
 
-  // pastikan skor bertambah 10 untuk setiap jawaban benar
+  
   const isCorrect = dir === targetDir;
   const score = isCorrect ? 10 : 0;
   
@@ -368,7 +498,7 @@ function respond(dir) {
     totalScore += 10;
     levelScore += 10;
   }
-  // simpan data per soal
+  
   trialData[level].push({
   trial: trial,
   score: score,
@@ -429,7 +559,7 @@ function nextLevel() {
   device: /Mobi|Android/i.test(navigator.userAgent) ? 'HP' : 'Laptop'
 });
 
-  show('finish'); // opsional tapi seharusnya ada
+  show('finish'); 
 
   }
 }
